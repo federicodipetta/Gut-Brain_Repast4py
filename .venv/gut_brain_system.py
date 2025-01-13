@@ -305,6 +305,7 @@ class GutBrainInterface():
         self.gut_grid = self.gut_context.get_projection("gut_grid")
         self.brain_grid = self.brain_context.get_projection("brain_grid")
         repast4py.random.seed = params['seed']
+        np.random.seed(params['seed'])
         self.rng = repast4py.random.default_rng
 
     # Unidirectional channel from gut to brain
@@ -500,7 +501,7 @@ class ExternalInput(core.Agent):
 
     def __init__(self, local_id: int, rank: int, pt: dpt, context):
         super().__init__(id=local_id, type=ExternalInput.TYPE, rank=rank)
-        possible_types = [params["external_input"]["diet"],params["external_input"]["antibiotics"],params["external_input"]["stress"]]
+        possible_types = list(params["external_input"].values())
         random_index = np.random.randint(0, len(possible_types))
         input_name = possible_types[random_index]
         self.input_name = input_name
@@ -519,9 +520,9 @@ class ExternalInput(core.Agent):
                 to_add = int((params["microbiota_pathogenic_bacteria_class"] * np.random.uniform(0, pathogenic_bacteria_factor)) / 100)
                 model.microbiota_pathogenic_bacteria_class += to_add
 
-            if self.input_name == params["external_input"]["diet"]:
+            if "diet" in params["external_input"].keys() and self.input_name == params["external_input"]["diet"]:
                 adjust_bacteria(3, 3)
-            elif self.input_name == params["external_input"]["antibiotics"]:
+            elif "antibiotics" in params["external_input"].keys() and self.input_name == params["external_input"]["antibiotics"]:
                 adjust_bacteria(5, 2)
             elif self.input_name == params["external_input"]["milk"]:
                 if params['lactose_intolerance'] == True:
