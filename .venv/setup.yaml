@@ -11,16 +11,14 @@ microbiota_pathogenic_bacteria_class : 10000
 microbiota_diversity_threshold : 10000
 
 # To start the dysbyosis
-external_input.count : 100
+external_input.count : 2
 external_input : {
-    milk: "milk",
-    sugar: "sugar",
-    salt: "salt",
+    diet: "diet",
 }
 lactose_intolerance : True
 # The treatment to use
 treatment : True
-treatment_input.count : 10
+treatment_input.count : 500
 
 treatment_input : {
     diet: "diet", 
@@ -55,7 +53,7 @@ alpha_syn_cleaved_brain.count : 0
 alpha_syn_oligomer_brain.count : 0
 tau_cleaved_brain.count : 0
 tau_oligomer_brain.count : 0
-hours_of_sleep.count: 10 # Value higher then 7 will be considered normal
+hours_of_sleep.count: 12 # Value higher then 7 will be considered normal
 
 microglia_state : {
     active: "active",
@@ -74,13 +72,13 @@ cyto_state : {
 }
 
 # Model variables
-world.width: 100
-world.height: 100
+world.width: 150
+world.height: 150
 
 # General variables
 stop.at : 500
 gut_log_file: 'output/gut_log.csv'
 brain_log_file: 'output/brain_log.csv'
 log_file: 'output/log_file.csv'
-seed: 12
+seed: 1
 

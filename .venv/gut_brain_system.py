@@ -524,14 +524,14 @@ class ExternalInput(core.Agent):
                 adjust_bacteria(3, 3)
             elif "antibiotics" in params["external_input"].keys() and self.input_name == params["external_input"]["antibiotics"]:
                 adjust_bacteria(5, 2)
-            elif self.input_name == params["external_input"]["milk"]:
+            elif "milk" in params["external_input"].keys() and self.input_name == params["external_input"]["milk"]:
                 if params['lactose_intolerance'] == True:
                     adjust_bacteria(1, 4)
                 else: 
                     adjust_bacteria(3, 4)
-            elif self.input_name == params["external_input"]["salt"]:
+            elif "salt" in params["external_input"].keys() and self.input_name == params["external_input"]["salt"]:
                 adjust_bacteria(2, 3)
-            elif self.input_name == params["external_input"]["sugar"]:
+            elif "sugar" in params["external_input"].keys() and self.input_name == params["external_input"]["sugar"]:
                 adjust_bacteria(1, 3)
             else:
                 adjust_bacteria(3, 3)
@@ -614,14 +614,34 @@ class Neuron(core.Agent):
     
     # Neuron step function
     def step(self): 
-        difference_pro_anti_cytokine = model.pro_cytokine - model.anti_cytokine
-        if difference_pro_anti_cytokine > 0: 
-            level_of_inflammation = (difference_pro_anti_cytokine * 100)/(model.pro_cytokine + model.anti_cytokine)
-            if np.random.randint(0,100) < level_of_inflammation: 
+        nghs_coords = model.ngh_finder.find(self.pt.x, self.pt.y)
+        ngb_cytokines = self.check_cytokine_nghs(nghs_coords)
+        number_of_pro_cytokines = 0
+        number_of_anti_cytokines = 0
+        for ngh in ngb_cytokines:
+            if ngh is not None:
+                if ngh.state == params["cyto_state"]["pro_inflammatory"]:
+                    number_of_pro_cytokines += 1
+                else:
+                    number_of_anti_cytokines += 1
+        difference_pro_anti_cytokine = number_of_pro_cytokines - number_of_anti_cytokines
+        if difference_pro_anti_cytokine >= 2 and self.state == params["neuron_state"]["healthy"]:
                 self.change_state()
+        elif difference_pro_anti_cytokine >= 6 and self.state == params["neuron_state"]["damaged"]:
+            self.change_state()
         else:
             pass
     
+        # returns the oligomer agent in the neighborhood of the agent     
+    def check_cytokine_nghs(self, nghs_coords):
+        cytokine_ngh = []
+        for ngh_coord in nghs_coords:
+            ngh_array = model.brain_grid.get_agents(dpt(ngh_coord[0], ngh_coord[1]))
+            for ngh in ngh_array:
+                if (type(ngh) == Cytokine):
+                    cytokine_ngh.append(ngh)
+        return cytokine_ngh
+
     # changes the state of the neuron agent
     def change_state(self):
         if self.state == params["neuron_state"]["healthy"]:
@@ -1027,8 +1047,13 @@ class Model():
             elif isinstance(agent, CleavedProtein) and agent.toAggregate:
                 all_true_cleaved_aggregates.append(agent)
                 agent.toRemove = True
-
-        for _ in range(active_microglia):
+        cytokine_to_add = 0 
+        # performance issue here so i had to add this condition
+        if self.pro_cytokine and self.anti_cytokine > 4000:
+            cytokine_to_add = active_microglia // 100
+        else: 
+            cytokine_to_add = active_microglia
+        for _ in range(cytokine_to_add):
             self.add_cytokine()
         for _ in range(damaged_neuron):
             self.brain_add_cleaved_protein()
@@ -1040,7 +1065,7 @@ class Model():
         # Add Oligomers based on the hours of sleep
         hours_of_sleep = params['hours_of_sleep.count']
         if hours_of_sleep < 8:
-            to_add = int(((abs(hours_of_sleep - 7 )) * np.random.uniform(0, 2)))
+            to_add = int(abs(hours_of_sleep - 8) * np.random.uniform(0, 1))
             for _ in range(to_add):
                 self.add_oligomer_protein('tau', 'brain')
 
